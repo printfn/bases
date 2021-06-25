@@ -496,5 +496,7 @@ mod tests {
         assert_eq!(num_roots_in_name(19, false, &mut cache), 3);
         assert_eq!(num_roots_in_name(34, false, &mut cache), 2);
         assert_eq!(num_roots_in_name(38, false, &mut cache), 4);
+
+        check_name(7220, "tetrahentrihexasnapentuntriseximal", &mut cache);
     }
 }
