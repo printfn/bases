@@ -126,7 +126,7 @@ impl Root {
     }
 }
 
-fn num_roots_in_name(n: i64, cache: &mut Cache) -> usize {
+fn num_roots_in_name(n: i64, prefix: bool, cache: &mut Cache) -> usize {
     if n < 0 { panic!() }
     if n == 1 { return 1 }
     if let Some(_) = Root::from_number(n) {
@@ -134,9 +134,13 @@ fn num_roots_in_name(n: i64, cache: &mut Cache) -> usize {
     } else {
         let (a, b) = closest_factors(n, cache);
         if a == 1 {
-            1 + num_roots_in_name(n - 1, cache)
+            if prefix {
+                2 + num_roots_in_name(n - 1, true, cache)
+            } else {
+                1 + num_roots_in_name(n - 1, false, cache)
+            }
         } else {
-            num_roots_in_name(a, cache) + num_roots_in_name(b, cache)
+            num_roots_in_name(a, true, cache) + num_roots_in_name(b, prefix, cache)
         }
     }
 }
@@ -173,7 +177,10 @@ fn closest_factors(n: i64, cache: &mut Cache) -> (i64, i64) {
         } else {
             (smaller_factor, larger_factor)
         };
-        let this_root_count = num_roots_in_name(smaller_factor, cache) + num_roots_in_name(larger_factor, cache);
+        let this_root_count = num_roots_in_name(smaller_factor, false, cache) + num_roots_in_name(larger_factor, false, cache);
+        // if n == 646 {
+        //     eprintln!("{} = {} * {} ({} roots)", n, smaller_factor, larger_factor, this_root_count);
+        // }
         if this_root_count > root_count { continue }
         if this_root_count < root_count {
             root_count = this_root_count;
@@ -427,7 +434,6 @@ mod tests {
         check_prefix(29, "hentetraheptasna", &mut cache);
         check_prefix(31, "henpentahexasna", &mut cache);
 
-        check_name(361, "hentrihexasnuntriseximal", &mut cache);
         check_name(646, "hentrihexasnabisuboptimal", &mut cache);
     }
 
@@ -472,5 +478,23 @@ mod tests {
         check_name(841, "hentetraheptasnuntetraseptimal", &mut cache);
         check_name(6254, "henbihentetraheptasnasnabintetraker's dozenal", &mut cache);
         check_name(5758, "binbinbinbinbinbinoctelevenary", &mut cache);
+    }
+
+    #[test]
+    fn test_num_roots() {
+        let mut cache = Cache::default();
+        assert_eq!(num_roots_in_name(76, false, &mut cache), 4);
+        assert_eq!(num_roots_in_name(95, false, &mut cache), 4);
+        assert_eq!(num_roots_in_name(20, false, &mut cache), 1);
+
+        check_name(361, "hentrihexasnuntriseximal", &mut cache);
+
+        // hen-tri-hexa-sn-un-tri-seximal
+        assert_eq!(num_roots_in_name(361, false, &mut cache), 7);
+
+        assert_eq!(num_roots_in_name(17, false, &mut cache), 1);
+        assert_eq!(num_roots_in_name(19, false, &mut cache), 3);
+        assert_eq!(num_roots_in_name(34, false, &mut cache), 2);
+        assert_eq!(num_roots_in_name(38, false, &mut cache), 4);
     }
 }
