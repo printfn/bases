@@ -427,6 +427,7 @@ mod tests {
         check_prefix(29, "hentetraheptasna", &mut cache);
         check_prefix(31, "henpentahexasna", &mut cache);
 
+        check_name(361, "hentrihexasnuntriseximal", &mut cache);
         check_name(646, "hentrihexasnabisuboptimal", &mut cache);
     }
 
