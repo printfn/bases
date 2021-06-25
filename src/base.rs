@@ -141,6 +141,10 @@ fn num_roots_in_name(n: i128, cache: &mut Cache) -> usize {
     }
 }
 
+fn sqrt(n: i128) -> i128 {
+    (n as f64).sqrt().ceil() as i128 + 2
+}
+
 // input: >= 2
 // output: (1.., 2..)
 fn closest_factors(n: i128, cache: &mut Cache) -> (i128, i128) {
@@ -150,10 +154,14 @@ fn closest_factors(n: i128, cache: &mut Cache) -> (i128, i128) {
     }
     let mut res = (1, n);
     let mut root_count = usize::MAX;
-    for smaller_factor in 2..n {
+    for smaller_factor in (2..sqrt(n)).rev() {
         if n % smaller_factor != 0 { continue }
         let larger_factor = n / smaller_factor;
-        if larger_factor < smaller_factor { break }
+        let (smaller_factor, larger_factor) = if larger_factor < smaller_factor { 
+            (larger_factor, smaller_factor)
+        } else {
+            (smaller_factor, larger_factor)
+        };
         let this_root_count = num_roots_in_name(smaller_factor, cache) + num_roots_in_name(larger_factor, cache);
         if this_root_count > root_count { continue }
         if this_root_count < root_count {
@@ -164,7 +172,6 @@ fn closest_factors(n: i128, cache: &mut Cache) -> (i128, i128) {
             res = (smaller_factor, larger_factor)
         }
     }
-    eprintln!("cache miss {}", n);
     cache.factors.insert(n, res);
     res
 }
