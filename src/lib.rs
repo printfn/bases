@@ -8,12 +8,12 @@ pub use base::BaseName;
 pub use base::Cache;
 
 /// Get the name of a given number base
-pub fn base_name(number: i128, cache: &mut Cache) -> BaseName {
+pub fn base_name(number: i64, cache: &mut Cache) -> BaseName {
     BaseName(Base::new(number, cache), true)
 }
 
 /// Get the name of a given number base
-pub fn rational_base_name(num: i128, den: i128, cache: &mut Cache) -> BaseName {
+pub fn rational_base_name(num: i64, den: i64, cache: &mut Cache) -> BaseName {
     BaseName(Base::new_frac(num, den, cache), true)
 }
 
@@ -23,7 +23,7 @@ pub fn non_rational_base_name(name: &str, greater_than_six: bool, one_syllable: 
 }
 
 /// Parse a given base name into a number
-fn parse_base_name(name: &str) -> Option<i128> {
+fn parse_base_name(name: &str) -> Option<i64> {
     Some(Base::try_parse(name)?.to_number())
 }
 
@@ -35,7 +35,7 @@ mod tests {
     use super::*;
 
     #[track_caller]
-    fn check_name(n: i128, s: &str, cache: &mut Cache) {
+    fn check_name(n: i64, s: &str, cache: &mut Cache) {
         assert_eq!(base_name(n, cache).to_string(), s);
     }
 

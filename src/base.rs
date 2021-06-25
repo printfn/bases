@@ -23,7 +23,7 @@ pub(crate) enum Root {
 }
 
 impl Root {
-    fn from_number(number: i128) -> Option<Self> {
+    fn from_number(number: i64) -> Option<Self> {
         Some(match number {
             2 => Self::Binary,
             3 => Self::Trinary,
@@ -126,7 +126,7 @@ impl Root {
     }
 }
 
-fn num_roots_in_name(n: i128, cache: &mut Cache) -> usize {
+fn num_roots_in_name(n: i64, cache: &mut Cache) -> usize {
     if n < 0 { panic!() }
     if n == 1 { return 1 }
     if let Some(_) = Root::from_number(n) {
@@ -141,20 +141,31 @@ fn num_roots_in_name(n: i128, cache: &mut Cache) -> usize {
     }
 }
 
-fn sqrt(n: i128) -> i128 {
-    (n as f64).sqrt().ceil() as i128 + 2
+fn sqrt(n: i64) -> i64 {
+    if n < 2 { return n }
+    let mut a = 1255;
+    let mut b = n / a;
+    a = (a + b) / 2;
+    b = n / a;
+    a = (a + b) / 2;
+    b = n / a;
+    a = (a + b) / 2;
+    b = n / a;
+    a = (a + b) / 2;
+    a + 1
 }
 
 // input: >= 2
 // output: (1.., 2..)
-fn closest_factors(n: i128, cache: &mut Cache) -> (i128, i128) {
+fn closest_factors(n: i64, cache: &mut Cache) -> (i64, i64) {
     if n < 2 { panic!() }
     if let Some(res) = cache.factors.get(&n) {
         return *res;
     }
     let mut res = (1, n);
     let mut root_count = usize::MAX;
-    for smaller_factor in (2..sqrt(n)).rev() {
+    let loop_max = sqrt(n);
+    for smaller_factor in (2..loop_max.min(n)).rev() {
         if n % smaller_factor != 0 { continue }
         let larger_factor = n / smaller_factor;
         let (smaller_factor, larger_factor) = if larger_factor < smaller_factor { 
@@ -179,7 +190,7 @@ fn closest_factors(n: i128, cache: &mut Cache) -> (i128, i128) {
 /// Used to cache intermediate calculations
 #[derive(Default)]
 pub struct Cache {
-    factors: HashMap<i128, (i128, i128)>,
+    factors: HashMap<i64, (i64, i64)>,
 }
 
 pub(crate) enum Base {
@@ -200,7 +211,7 @@ fn is_vowel_or_y(ch: char) -> bool {
 }
 
 impl Base {
-    pub(crate) fn new_frac(num: i128, den: i128, cache: &mut Cache) -> Self {
+    pub(crate) fn new_frac(num: i64, den: i64, cache: &mut Cache) -> Self {
         if den == 1 {
             Self::new(num, cache)
         } else {
@@ -208,7 +219,7 @@ impl Base {
         }
     }
 
-    pub(crate) fn new(n: i128, cache: &mut Cache) -> Self {
+    pub(crate) fn new(n: i64, cache: &mut Cache) -> Self {
         if n < 0 { return Self::Nega(Box::new(Self::new(-n, cache))) }
         if n == 0 { return Self::Nullary };
         if n == 1 { return Self::Unary };
@@ -239,13 +250,13 @@ impl Base {
         Some(Self::Root(Root::parse(s)?))
     }
 
-    pub(crate) fn to_number(&self) -> i128 {
+    pub(crate) fn to_number(&self) -> i64 {
         match self {
             Self::Nullary => 0,
             Self::Unary => 1,
             Self::Root(r) => r.to_number().into(),
-            Self::FactorPair(a, b) => a.to_number() * i128::from(b.to_number()),
-            Self::Prime(one_below) => i128::from(one_below.to_number()) + 1,
+            Self::FactorPair(a, b) => a.to_number() * i64::from(b.to_number()),
+            Self::Prime(one_below) => i64::from(one_below.to_number()) + 1,
             Self::Nega(n) => -n.to_number(),
             Self::Vot(num, den) => {
                 if den.to_number() == 1 {
@@ -394,12 +405,12 @@ mod tests {
     }
 
     #[track_caller]
-    fn check_name(n: i128, s: &str, cache: &mut Cache) {
+    fn check_name(n: i64, s: &str, cache: &mut Cache) {
         assert_eq!(BaseName(Base::new(n, cache), true).to_string(), s);
     }
 
     #[track_caller]
-    fn check_prefix(n: i128, s: &str, cache: &mut Cache) {
+    fn check_prefix(n: i64, s: &str, cache: &mut Cache) {
         assert_eq!(PrefixName(Base::new(n, cache)).to_string(), s);
     }
 
