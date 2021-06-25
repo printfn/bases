@@ -172,14 +172,14 @@ fn abbr_in_use(abbr: &str, cache: &mut Cache) -> bool {
     cache.abbr_set.contains(abbr)
 }
 
-fn get_abbr(name: &str, k: usize, res: &mut String) {
+fn get_abbr(name: &str, k: u64, res: &mut String) {
     for (_, ch) in name.char_indices().filter(|(i, _)| k & (1 << i) != 0) {
         res.push(ch);
     }
 }
 
 // from https://stackoverflow.com/a/8281965
-fn next_bitstring(v: usize) -> usize {
+fn next_bitstring(v: u64) -> u64 {
     let t = v | v.wrapping_sub(1);
     t.wrapping_add(1) | ((!t & (!t).wrapping_neg()).wrapping_sub(1) >> (v.trailing_zeros() + 1))
 }
@@ -205,7 +205,7 @@ pub(crate) fn find_abbreviation(n: i64, cache: &mut Cache) -> &str {
             let mut k = (1 << (abbr_len - 1)) - 1;
             loop {
                 if cfg!(test) {
-                    assert_eq!(usize::count_ones(k), abbr_len - 1);
+                    assert_eq!(u64::count_ones(k), abbr_len - 1);
                 }
                 if !first && k & (1 << name.len() as u32 - 1) != 0 {
                     break;
@@ -591,7 +591,7 @@ mod tests {
 
     #[test]
     fn test_get_abbr() {
-        fn get_abbr_test(s: &str, k: usize) -> String {
+        fn get_abbr_test(s: &str, k: u64) -> String {
             let mut res = String::new();
             get_abbr(s, k, &mut res);
             res
