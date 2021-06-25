@@ -1,4 +1,7 @@
-use std::{collections::{HashMap, HashSet}, convert, fmt};
+use std::{
+    collections::{HashMap, HashSet},
+    convert, fmt,
+};
 
 #[repr(u8)]
 #[derive(Clone, Copy)]
@@ -199,12 +202,9 @@ pub(crate) fn find_abbreviation(n: i64, cache: &mut Cache) -> &str {
         let name = name.split_at(1).1;
         let mut first = true;
         'outer: for abbr_len in 3.. {
-            let mut k = 0;
+            let mut k = (1 << (abbr_len - 1)) - 1;
             loop {
-                k += 1;
-                if usize::count_ones(k) != abbr_len - 1 {
-                    continue;
-                }
+                assert_eq!(usize::count_ones(k), abbr_len - 1);
                 if !first && k & (1 << name.len() as u32 - 1) != 0 {
                     break;
                 }
@@ -215,6 +215,7 @@ pub(crate) fn find_abbreviation(n: i64, cache: &mut Cache) -> &str {
                 }
                 abbr.clear();
                 abbr.push(first_char);
+                k = next_bitstring(k);
             }
         }
         cache.abbreviations.push(abbr.clone());
