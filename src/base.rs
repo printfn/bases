@@ -1,4 +1,4 @@
-use std::{collections::HashMap, convert, fmt};
+use std::{collections::{HashMap, HashSet}, convert, fmt};
 
 #[repr(u8)]
 #[derive(Clone, Copy)]
@@ -166,12 +166,7 @@ fn sqrt(n: i64) -> i64 {
 }
 
 fn abbr_in_use(abbr: &str, cache: &mut Cache) -> bool {
-    for a in &cache.abbreviations {
-        if a == abbr {
-            return true;
-        }
-    }
-    false
+    cache.abbr_set.contains(abbr)
 }
 
 fn get_abbr(name: &str, k: usize, res: &mut String) {
@@ -214,7 +209,8 @@ pub(crate) fn find_abbreviation(n: i64, cache: &mut Cache) -> &str {
                 abbr.push(first_char);
             }
         }
-        cache.abbreviations.push(abbr);
+        cache.abbreviations.push(abbr.clone());
+        cache.abbr_set.insert(abbr);
     }
     return cache.abbreviations[n].as_str();
 }
@@ -266,6 +262,7 @@ fn closest_factors(n: i64, cache: &mut Cache) -> (i64, i64) {
 pub struct Cache {
     factors: HashMap<i64, (i64, i64)>,
     abbreviations: Vec<String>,
+    abbr_set: HashSet<String>,
 }
 
 pub(crate) enum Base {
