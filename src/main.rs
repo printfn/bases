@@ -1,8 +1,8 @@
 #[allow(dead_code)]
 mod base;
 
-use std::{env, error};
 use base::*;
+use std::{env, error};
 
 fn loop_all_numbers() -> ! {
     let mut n = 1;

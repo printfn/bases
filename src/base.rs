@@ -124,8 +124,8 @@ impl Root {
         }
     }
 
-    fn to_number(&self) -> u8 {
-        *self as u8
+    fn to_number(self) -> u8 {
+        self as u8
     }
 }
 
@@ -136,7 +136,7 @@ fn num_roots_in_name(n: i64, prefix: bool, cache: &mut Cache) -> usize {
     if n == 1 {
         return 1;
     }
-    if let Some(_) = Root::from_number(n) {
+    if Root::from_number(n).is_some() {
         1
     } else {
         let (a, b) = closest_factors(n, cache);
@@ -207,7 +207,7 @@ pub(crate) fn find_abbreviation(n: i64, cache: &mut Cache) -> &str {
                 if cfg!(test) {
                     assert_eq!(u64::count_ones(k), abbr_len - 1);
                 }
-                if !first && k & (1 << name.len() as u32 - 1) != 0 {
+                if !first && k & (1 << (name.len() as u32 - 1)) != 0 {
                     break;
                 }
                 get_abbr(&name, k, &mut abbr);
@@ -223,7 +223,7 @@ pub(crate) fn find_abbreviation(n: i64, cache: &mut Cache) -> &str {
         cache.abbreviations.push(abbr.clone());
         cache.abbr_set.insert(abbr);
     }
-    return cache.abbreviations[n].as_str();
+    cache.abbreviations[n].as_str()
 }
 
 // input: >= 2
@@ -347,8 +347,8 @@ impl Base {
             Self::Nullary => 0,
             Self::Unary => 1,
             Self::Root(r) => r.to_number().into(),
-            Self::FactorPair(a, b) => a.to_number() * i64::from(b.to_number()),
-            Self::Prime(one_below) => i64::from(one_below.to_number()) + 1,
+            Self::FactorPair(a, b) => a.to_number() * b.to_number(),
+            Self::Prime(one_below) => one_below.to_number() + 1,
             Self::Nega(n) => -n.to_number(),
             Self::Vot(num, den) => {
                 if den.to_number() == 1 {
@@ -388,8 +388,8 @@ impl Base {
 
     pub(crate) fn format_name(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::Nullary => write!(f, "{}", "nullary"),
-            Self::Unary => write!(f, "{}", "unary"),
+            Self::Nullary => write!(f, "nullary"),
+            Self::Unary => write!(f, "unary"),
             Self::Root(r) => write!(f, "{}", r.name()),
             Self::FactorPair(a, b) => {
                 a.prefix_name(f)?;
