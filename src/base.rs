@@ -462,4 +462,12 @@ mod tests {
         check_name(-2, "negabinary", &mut cache);
         check_name(-10, "negadecimal", &mut cache);
     }
+
+    #[test]
+    fn long_names() {
+        let mut cache = Cache::default();
+        check_name(841, "hentetraheptasnuntetraseptimal", &mut cache);
+        check_name(6254, "henbihentetraheptasnasnabintetraker's dozenal", &mut cache);
+        check_name(5758, "binbinbinbinbinbinoctelevenary", &mut cache);
+    }
 }
