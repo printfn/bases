@@ -1,0 +1,447 @@
+use std::{collections::HashMap, fmt};
+
+#[repr(u8)]
+#[derive(Clone, Copy)]
+pub(crate) enum Root {
+    Binary = 2,
+    Trinary = 3,
+    Quaternary = 4,
+    Quinary = 5,
+    Seximal = 6,
+    Septimal = 7,
+    Octal = 8,
+    Nonary = 9,
+    Decimal = 10,
+    Elevenary = 11,
+    Dozenal = 12,
+    BakersDozenal = 13,
+    Hex = 16,
+    Suboptimal = 17,
+    Vigesimal = 20,
+    Niftimal = 36,
+    Centesimal = 100,
+}
+
+impl Root {
+    fn from_number(number: i128) -> Option<Self> {
+        Some(match number {
+            2 => Self::Binary,
+            3 => Self::Trinary,
+            4 => Self::Quaternary,
+            5 => Self::Quinary,
+            6 => Self::Seximal,
+            7 => Self::Septimal,
+            8 => Self::Octal,
+            9 => Self::Nonary,
+            10 => Self::Decimal,
+            11 => Self::Elevenary,
+            12 => Self::Dozenal,
+            13 => Self::BakersDozenal,
+            16 => Self::Hex,
+            17 => Self::Suboptimal,
+            20 => Self::Vigesimal,
+            36 => Self::Niftimal,
+            100 => Self::Centesimal,
+            _ => return None,
+        })
+    }
+
+    fn parse(s: &str) -> Option<Self> {
+        Some(match s {
+            "binary" => Self::Binary,
+            "trinary" => Self::Trinary,
+            "quaternary" => Self::Quaternary,
+            "quinary" => Self::Quinary,
+            "seximal" => Self::Seximal,
+            "septimal" => Self::Septimal,
+            "octal" => Self::Octal,
+            "nonary" => Self::Nonary,
+            "decimal" => Self::Decimal,
+            "elevenary" => Self::Elevenary,
+            "dozenal" => Self::Dozenal,
+            "baker's dozenal" => Self::BakersDozenal,
+            "hex" => Self::Hex,
+            "suboptimal" => Self::Suboptimal,
+            "vigesimal" => Self::Vigesimal,
+            "niftimal" => Self::Niftimal,
+            "centesimal" => Self::Centesimal,
+            _ => return None,
+        })
+    }
+
+    fn name(&self) -> &'static str {
+        match self {
+            Self::Binary => "binary",
+            Self::Trinary => "trinary",
+            Self::Quaternary => "quaternary",
+            Self::Quinary => "quinary",
+            Self::Seximal => "seximal",
+            Self::Septimal => "septimal",
+            Self::Octal => "octal",
+            Self::Nonary => "nonary",
+            Self::Decimal => "decimal",
+            Self::Elevenary => "elevenary",
+            Self::Dozenal => "dozenal",
+            Self::BakersDozenal => "baker's dozenal",
+            Self::Hex => "hex",
+            Self::Suboptimal => "suboptimal",
+            Self::Vigesimal => "vigesimal",
+            Self::Niftimal => "niftimal",
+            Self::Centesimal => "centesimal",
+        }
+    }
+
+    fn prefix_name(&self) -> &'static str {
+        match self {
+            Self::Binary => "bi",
+            Self::Trinary => "tri",
+            Self::Quaternary => "tetra",
+            Self::Quinary => "penta",
+            Self::Seximal => "hexa",
+            Self::Septimal => "hepta",
+            Self::Octal => "octo",
+            Self::Nonary => "enna",
+            Self::Decimal => "deca",
+            Self::Elevenary => "leva",
+            Self::Dozenal => "doza",
+            Self::BakersDozenal => "baker",
+            Self::Hex => "tesser",
+            Self::Suboptimal => "mal",
+            Self::Vigesimal => "icosi",
+            Self::Niftimal => "feta",
+            Self::Centesimal => "hecto",
+        }
+    }
+
+    fn suffix_name(&self) -> &'static str {
+        match self {
+            Self::Decimal => "gesimal",
+            Self::BakersDozenal => "ker's dozenal",
+            _ => self.name(),
+        }
+    }
+
+    fn to_number(&self) -> u8 {
+        *self as u8
+    }
+}
+
+fn num_roots_in_name(n: i128, cache: &mut Cache) -> usize {
+    if n < 0 { panic!() }
+    if n == 1 { return 1 }
+    if let Some(_) = Root::from_number(n) {
+        1
+    } else {
+        let (a, b) = closest_factors(n, cache);
+        if a == 1 {
+            1 + num_roots_in_name(n - 1, cache)
+        } else {
+            num_roots_in_name(a, cache) + num_roots_in_name(b, cache)
+        }
+    }
+}
+
+// input: >= 2
+// output: (1.., 2..)
+fn closest_factors(n: i128, cache: &mut Cache) -> (i128, i128) {
+    if n < 2 { panic!() }
+    if let Some(res) = cache.factors.get(&n) {
+        return *res;
+    }
+    let mut res = (1, n);
+    let mut root_count = usize::MAX;
+    for smaller_factor in 2..n {
+        if n % smaller_factor != 0 { continue }
+        let larger_factor = n / smaller_factor;
+        if larger_factor < smaller_factor { break }
+        let this_root_count = num_roots_in_name(smaller_factor, cache) + num_roots_in_name(larger_factor, cache);
+        if this_root_count > root_count { continue }
+        if this_root_count < root_count {
+            root_count = this_root_count;
+            res = (smaller_factor, larger_factor);
+        }
+        if larger_factor - smaller_factor < res.1 - res.0 {
+            res = (smaller_factor, larger_factor)
+        }
+    }
+    eprintln!("cache miss {}", n);
+    cache.factors.insert(n, res);
+    res
+}
+
+/// Used to cache intermediate calculations
+#[derive(Default)]
+pub struct Cache {
+    factors: HashMap<i128, (i128, i128)>,
+}
+
+pub(crate) enum Base {
+    Nullary,
+    Unary,
+    Root(Root),
+    FactorPair(Box<Base>, Box<Base>),
+    Prime(Box<Base>), // un- prefix
+    Nega(Box<Base>),
+    Vot(Box<Base>, Box<Base>),
+    CustomLessThanSix(String),
+    Imal(String), // greater than six, one syllable
+    Al(String), // greater than six, more than one syllable
+}
+
+fn is_vowel_or_y(ch: char) -> bool {
+    matches!(ch, 'a' | 'e' | 'i' | 'o' | 'u' | 'y')
+}
+
+impl Base {
+    pub(crate) fn new_frac(num: i128, den: i128, cache: &mut Cache) -> Self {
+        if den == 1 {
+            Self::new(num, cache)
+        } else {
+            Self::Vot(Box::new(Self::new(num, cache)), Box::new(Self::new(den, cache)))
+        }
+    }
+
+    pub(crate) fn new(n: i128, cache: &mut Cache) -> Self {
+        if n < 0 { return Self::Nega(Box::new(Self::new(-n, cache))) }
+        if n == 0 { return Self::Nullary };
+        if n == 1 { return Self::Unary };
+        if let Some(root) = Root::from_number(n) {
+            return Self::Root(root)
+        }
+        let (a, b) = closest_factors(n, cache);
+        if a == 1 {
+            // prime base
+            return Self::Prime(Box::new(Base::new(b - 1, cache)));
+        }
+        let a = Base::new(a, cache);
+        let b = Base::new(b, cache);
+        Self::FactorPair(Box::new(a), Box::new(b))
+    }
+
+    pub(crate) fn new_custom(s: &str, greater_than_six: bool, one_syllable: bool) -> Self {
+        if !greater_than_six {
+            Self::CustomLessThanSix(s.to_string())
+        } else if one_syllable {
+            Self::Imal(s.to_string())
+        } else {
+            Self::Al(s.to_string())
+        }
+    }
+
+    pub(crate) fn try_parse(s: &str) -> Option<Self> {
+        Some(Self::Root(Root::parse(s)?))
+    }
+
+    pub(crate) fn to_number(&self) -> i128 {
+        match self {
+            Self::Nullary => 0,
+            Self::Unary => 1,
+            Self::Root(r) => r.to_number().into(),
+            Self::FactorPair(a, b) => a.to_number() * i128::from(b.to_number()),
+            Self::Prime(one_below) => i128::from(one_below.to_number()) + 1,
+            Self::Nega(n) => -n.to_number(),
+            Self::Vot(num, den) => {
+                if den.to_number() == 1 {
+                    num.to_number()
+                } else {
+                    panic!("non-integer base")
+                }
+            }
+            Self::CustomLessThanSix(_) => panic!("unknown number"),
+            Self::Imal(_) => panic!("unknown number"),
+            Self::Al(_) => panic!("unknown number"),
+        }
+    }
+
+    fn prefix_name(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Root(r) => write!(f, "{}", r.prefix_name()),
+            Self::Prime(one_below) => {
+                write!(f, "hen")?;
+                one_below.prefix_name(f)?;
+                write!(f, "sna")
+            }
+            Self::FactorPair(a, b) => {
+                a.prefix_name(f)?;
+                b.prefix_name(f)
+            }
+            _ => panic!(),
+        }
+    }
+
+    fn suffix_name(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Root(r) => write!(f, "{}", r.suffix_name()),
+            _ => self.format_name(f)
+        }
+    }
+
+    pub(crate) fn format_name(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Nullary => write!(f, "{}", "nullary"),
+            Self::Unary => write!(f, "{}", "unary"),
+            Self::Root(r) => write!(f, "{}", r.name()),
+            Self::FactorPair(a, b) => {
+                a.prefix_name(f)?;
+                b.suffix_name(f)
+            }
+            Self::Prime(one_below) => {
+                write!(f, "un")?;
+                one_below.format_name(f)
+            }
+            Self::Nega(n) => {
+                write!(f, "nega")?;
+                n.format_name(f)
+            }
+            Self::Vot(a, b) => {
+                if a.to_number() != 1 {
+                    a.prefix_name(f)?;
+                }
+                write!(f, "vot")?;
+                b.format_name(f)
+            }
+            Self::CustomLessThanSix(s) => {
+                write!(f, "{}", s)?;
+                if s.ends_with(is_vowel_or_y) {
+                    write!(f, "nary")
+                } else {
+                    write!(f, "ary")
+                }
+            }
+            Self::Imal(s) => {
+                write!(f, "{}imal", s)
+            }
+            Self::Al(s) => {
+                write!(f, "{}al", s)
+            }
+        }
+    }
+}
+
+#[derive(PartialEq, Eq)]
+enum EndVowel {
+    None,
+    I,
+    A,
+    O,
+}
+
+fn fixup_vowels(s: &str) -> String {
+    let mut res = String::new();
+    let mut prev = None;
+    for ch in s.chars() {
+        match (prev, ch) {
+            (Some('i'), 'i' | 'u') => {
+                res.push('i');
+                prev = None;
+            }
+            (Some('a' | 'o'), 'o' | 'e' | 'i' | 'u') => {
+                res.push(ch);
+                prev = None;
+            }
+            (Some(p), _) => {
+                res.push(p);
+                prev = Some(ch);
+            }
+            (None, _) => prev = Some(ch),
+        }
+    }
+    if let Some(p) = prev {
+        res.push(p);
+    }
+    res
+}
+
+struct InternalName<'a>(&'a Base);
+
+impl fmt::Display for InternalName<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.format_name(f)
+    }
+}
+
+/// Represents the name of a number base (bool: fixup)
+pub struct BaseName(pub(crate) Base, pub(crate) bool);
+
+impl fmt::Display for BaseName {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = InternalName(&self.0).to_string();
+        if self.1 {
+            write!(f, "{}", fixup_vowels(&s))
+        } else {
+            write!(f, "{}", &s)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fmt;
+
+    struct PrefixName(Base);
+    impl fmt::Display for PrefixName {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            self.0.prefix_name(f)
+        }
+    }
+
+    #[track_caller]
+    fn check_name(n: i128, s: &str, cache: &mut Cache) {
+        assert_eq!(BaseName(Base::new(n, cache), true).to_string(), s);
+    }
+
+    #[track_caller]
+    fn check_prefix(n: i128, s: &str, cache: &mut Cache) {
+        assert_eq!(PrefixName(Base::new(n, cache)).to_string(), s);
+    }
+
+    #[test]
+    fn nested_prefix_names() {
+        let mut cache = Cache::default();
+        check_name(19, "untriseximal", &mut cache);
+        check_name(23, "unbielevenary", &mut cache);
+        check_name(29, "untetraseptimal", &mut cache);
+        check_name(31, "unpentaseximal", &mut cache);
+
+        check_prefix(19, "hentrihexasna", &mut cache);
+        check_prefix(23, "henbilevasna", &mut cache);
+        check_prefix(29, "hentetraheptasna", &mut cache);
+        check_prefix(31, "henpentahexasna", &mut cache);
+    }
+
+    #[test]
+    fn more_than_two_factors() {
+        let mut cache = Cache::default();
+        check_name(98, "heptabiseptimal", &mut cache);
+        check_name(600, "hexacentesimal", &mut cache);
+    }
+
+    #[test]
+    fn vowel_changes() {
+        let mut cache = Cache::default();
+        check_name(20 * 64, "icosioctoctal", &mut cache);
+        check_name(22, "bielevenary", &mut cache);
+        check_name(20 * 20 * 401, "icosicosinicosivigesimal", &mut cache);
+        check_name(38, "bintriseximal", &mut cache);
+
+        check_name(32, "tetroctal", &mut cache);
+        check_name(44, "tetrelevenary", &mut cache);
+        check_name(140 * 140, "hepticosiheptavigesimal", &mut cache);
+        check_name(4 * 19, "tetruntriseximal", &mut cache);
+
+        check_name(64, "octoctal", &mut cache);
+        check_name(88, "octelevenary", &mut cache);
+        check_name(2000 * 2000, "icosihecticosicentesimal", &mut cache);
+        check_name(8 * 19, "octuntriseximal", &mut cache);
+    }
+
+    #[test]
+    fn special_names() {
+        let mut cache = Cache::default();
+        check_name(1, "unary", &mut cache);
+        check_name(0, "nullary", &mut cache);
+        check_name(-2, "negabinary", &mut cache);
+        check_name(-10, "negadecimal", &mut cache);
+    }
+}
