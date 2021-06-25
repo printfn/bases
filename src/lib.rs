@@ -22,6 +22,11 @@ pub fn non_rational_base_name(name: &str, greater_than_six: bool, one_syllable: 
     BaseName(Base::new_custom(name, greater_than_six, one_syllable), false)
 }
 
+/// Get the abbreviation of the given number base (e.g. DEC for 10)
+pub fn base_abbreviation(number: i64, cache: &mut Cache) -> String {
+    find_abbreviation(number, cache).to_string()
+}
+
 /// Parse a given base name into a number
 fn parse_base_name(name: &str) -> Option<i64> {
     Some(Base::try_parse(name)?.to_number())

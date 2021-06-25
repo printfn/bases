@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt};
+use std::{collections::HashMap, convert, fmt};
 
 #[repr(u8)]
 #[derive(Clone, Copy)]
@@ -159,6 +159,60 @@ fn sqrt(n: i64) -> i64 {
     a + 1
 }
 
+fn abbr_in_use(abbr: &str, cache: &mut Cache) -> bool {
+    for a in &cache.abbreviations {
+        if a == abbr {
+            return true;
+        }
+    }
+    false
+}
+
+fn get_abbr(name: &str, k: usize, res: &mut String) {
+    for (_, ch) in name.char_indices().filter(|(i, _)| k & (1 << i) != 0) {
+        res.push(ch);
+    }
+}
+
+pub(crate) fn find_abbreviation(n: i64, cache: &mut Cache) -> &str {
+    assert!(n >= 1);
+    let n: usize = convert::TryFrom::try_from(n).unwrap();
+    for num in cache.abbreviations.len()..=n {
+        let num: i64 = convert::TryFrom::try_from(num).unwrap();
+        let mut name = BaseName(Base::new(num, cache), true).to_string();
+        name.make_ascii_uppercase();
+        name = name
+            .char_indices()
+            .filter(|(_, c)| { *c != ' ' && *c != '\'' })
+            .filter(|(i, c)| *i < 3 || !"AEIOU".contains(*c))
+            .map(|(_, c)| c.to_ascii_uppercase())
+            .collect();
+        let first_char = name.chars().next().unwrap();
+        let mut abbr = String::from(first_char);
+        let name = name.split_at(1).1;
+        let mut first = true;
+        'outer: for abbr_len in 3.. {
+            for k in 0.. {
+                if usize::count_ones(k) != abbr_len - 1 {
+                    continue
+                }
+                if !first && k & (1 << name.len() as u32 - 1) != 0 {
+                    break;
+                }
+                get_abbr(&name, k, &mut abbr);
+                first = false;
+                if !abbr_in_use(&abbr, cache) {
+                    break 'outer;
+                }
+                abbr.clear();
+                abbr.push(first_char);
+            }
+        }
+        cache.abbreviations.push(abbr);
+    }
+    return cache.abbreviations[n].as_str();
+}
+
 // input: >= 2
 // output: (1.., 2..)
 fn closest_factors(n: i64, cache: &mut Cache) -> (i64, i64) {
@@ -198,6 +252,7 @@ fn closest_factors(n: i64, cache: &mut Cache) -> (i64, i64) {
 #[derive(Default)]
 pub struct Cache {
     factors: HashMap<i64, (i64, i64)>,
+    abbreviations: Vec<String>,
 }
 
 pub(crate) enum Base {
@@ -498,5 +553,42 @@ mod tests {
         assert_eq!(num_roots_in_name(38, false, &mut cache), 4);
 
         check_name(7220, "tetrahentrihexasnapentuntriseximal", &mut cache);
+    }
+
+    #[test]
+    fn test_get_abbr() {
+        fn get_abbr_test(s: &str, k: usize) -> String {
+            let mut res = String::new();
+            get_abbr(s, k, &mut res);
+            res
+        }
+        assert_eq!(get_abbr_test("abcdefg", 0), "");
+        assert_eq!(get_abbr_test("abcdefg", 1), "a");
+        assert_eq!(get_abbr_test("abcdefg", 2), "b");
+        assert_eq!(get_abbr_test("abcdefg", 3), "ab");
+        assert_eq!(get_abbr_test("abcdefg", 4), "c");
+        assert_eq!(get_abbr_test("abcdefg", 5), "ac");
+        assert_eq!(get_abbr_test("abcdefg", 6), "bc");
+        assert_eq!(get_abbr_test("abcdefg", 7), "abc");
+        assert_eq!(get_abbr_test("abcdefg", 8), "d");
+    }
+
+    #[test]
+    fn find_abbr() {
+        let mut cache = Cache::default();
+        assert_eq!(find_abbreviation(1, &mut cache), "UNA");
+        assert_eq!(find_abbreviation(16, &mut cache), "HEX");
+        assert_eq!(find_abbreviation(40, &mut cache), "PEC");
+        assert_eq!(find_abbreviation(100, &mut cache), "CEN");
+        assert_eq!(find_abbreviation(200, &mut cache), "DEV");
+        assert_eq!(find_abbreviation(300, &mut cache), "TCN");
+        assert_eq!(find_abbreviation(400, &mut cache), "ICO");
+        assert_eq!(find_abbreviation(500, &mut cache), "PCN");
+        assert_eq!(find_abbreviation(585, &mut cache), "BAKR");
+        assert_eq!(find_abbreviation(841, &mut cache), "HSS");
+        assert_eq!(find_abbreviation(969, &mut cache), "HBM");
+        assert_eq!(find_abbreviation(1000, &mut cache), "DCS");
+        //assert_eq!(find_abbreviation(5758, &mut cache), "BBBC");
+        //assert_eq!(find_abbreviation(6254, &mut cache), "HHTK");
     }
 }
