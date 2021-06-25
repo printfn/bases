@@ -186,7 +186,7 @@ pub(crate) fn find_abbreviation(n: i64, cache: &mut Cache) -> &str {
             .char_indices()
             .filter(|(_, c)| *c != ' ' && *c != '\'')
             .filter(|(i, c)| *i < 3 || !"AEIOU".contains(*c))
-            .map(|(_, c)| c.to_ascii_uppercase())
+            .map(|(_, c)| c)
             .collect();
         let first_char = name.chars().next().unwrap();
         let mut abbr = String::from(first_char);
