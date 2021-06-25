@@ -204,7 +204,9 @@ pub(crate) fn find_abbreviation(n: i64, cache: &mut Cache) -> &str {
         'outer: for abbr_len in 3.. {
             let mut k = (1 << (abbr_len - 1)) - 1;
             loop {
-                assert_eq!(usize::count_ones(k), abbr_len - 1);
+                if cfg!(test) {
+                    assert_eq!(usize::count_ones(k), abbr_len - 1);
+                }
                 if !first && k & (1 << name.len() as u32 - 1) != 0 {
                     break;
                 }
