@@ -175,6 +175,12 @@ fn get_abbr(name: &str, k: usize, res: &mut String) {
     }
 }
 
+// from https://stackoverflow.com/a/8281965
+fn next_bitstring(v: usize) -> usize {
+    let t = v | v.wrapping_sub(1);
+    t.wrapping_add(1) | ((!t & (!t).wrapping_neg()).wrapping_sub(1) >> (v.trailing_zeros() + 1))
+}
+
 pub(crate) fn find_abbreviation(n: i64, cache: &mut Cache) -> &str {
     assert!(n >= 1);
     let n: usize = convert::TryFrom::try_from(n).unwrap();
@@ -193,7 +199,9 @@ pub(crate) fn find_abbreviation(n: i64, cache: &mut Cache) -> &str {
         let name = name.split_at(1).1;
         let mut first = true;
         'outer: for abbr_len in 3.. {
-            for k in 0.. {
+            let mut k = 0;
+            loop {
+                k += 1;
                 if usize::count_ones(k) != abbr_len - 1 {
                     continue;
                 }
@@ -594,6 +602,11 @@ mod tests {
         assert_eq!(get_abbr_test("abcdefg", 6), "bc");
         assert_eq!(get_abbr_test("abcdefg", 7), "abc");
         assert_eq!(get_abbr_test("abcdefg", 8), "d");
+    }
+
+    #[test]
+    fn next_bitstr() {
+        assert_eq!(next_bitstring(0b11), 0b101);
     }
 
     #[test]
