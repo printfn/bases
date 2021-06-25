@@ -19,7 +19,10 @@ pub fn rational_base_name(num: i64, den: i64, cache: &mut Cache) -> BaseName {
 
 /// Get the name of a non-rational base, e.g. base pi, phi or tau
 pub fn non_rational_base_name(name: &str, greater_than_six: bool, one_syllable: bool) -> BaseName {
-    BaseName(Base::new_custom(name, greater_than_six, one_syllable), false)
+    BaseName(
+        Base::new_custom(name, greater_than_six, one_syllable),
+        false,
+    )
 }
 
 /// Get the abbreviation of the given number base (e.g. DEC for 10)
@@ -87,13 +90,25 @@ mod tests {
     #[test]
     fn rational_names() {
         let mut cache = Cache::default();
-        assert_eq!(rational_base_name(1, 10, &mut cache).to_string(), "votdecimal");
-        assert_eq!(rational_base_name(2, 3, &mut cache).to_string(), "bivottrinary");
+        assert_eq!(
+            rational_base_name(1, 10, &mut cache).to_string(),
+            "votdecimal"
+        );
+        assert_eq!(
+            rational_base_name(2, 3, &mut cache).to_string(),
+            "bivottrinary"
+        );
     }
 
     #[test]
     fn custom_names() {
-        assert_eq!(non_rational_base_name("phi", false, true).to_string(), "phinary");
-        assert_eq!(non_rational_base_name("tau", true, true).to_string(), "tauimal");
+        assert_eq!(
+            non_rational_base_name("phi", false, true).to_string(),
+            "phinary"
+        );
+        assert_eq!(
+            non_rational_base_name("tau", true, true).to_string(),
+            "tauimal"
+        );
     }
 }

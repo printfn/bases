@@ -127,8 +127,12 @@ impl Root {
 }
 
 fn num_roots_in_name(n: i64, prefix: bool, cache: &mut Cache) -> usize {
-    if n < 0 { panic!() }
-    if n == 1 { return 1 }
+    if n < 0 {
+        panic!()
+    }
+    if n == 1 {
+        return 1;
+    }
     if let Some(_) = Root::from_number(n) {
         1
     } else {
@@ -146,7 +150,9 @@ fn num_roots_in_name(n: i64, prefix: bool, cache: &mut Cache) -> usize {
 }
 
 fn sqrt(n: i64) -> i64 {
-    if n < 2 { return n }
+    if n < 2 {
+        return n;
+    }
     let mut a = 1255;
     let mut b = n / a;
     a = (a + b) / 2;
@@ -183,7 +189,7 @@ pub(crate) fn find_abbreviation(n: i64, cache: &mut Cache) -> &str {
         name.make_ascii_uppercase();
         name = name
             .char_indices()
-            .filter(|(_, c)| { *c != ' ' && *c != '\'' })
+            .filter(|(_, c)| *c != ' ' && *c != '\'')
             .filter(|(i, c)| *i < 3 || !"AEIOU".contains(*c))
             .map(|(_, c)| c.to_ascii_uppercase())
             .collect();
@@ -194,7 +200,7 @@ pub(crate) fn find_abbreviation(n: i64, cache: &mut Cache) -> &str {
         'outer: for abbr_len in 3.. {
             for k in 0.. {
                 if usize::count_ones(k) != abbr_len - 1 {
-                    continue
+                    continue;
                 }
                 if !first && k & (1 << name.len() as u32 - 1) != 0 {
                     break;
@@ -216,7 +222,9 @@ pub(crate) fn find_abbreviation(n: i64, cache: &mut Cache) -> &str {
 // input: >= 2
 // output: (1.., 2..)
 fn closest_factors(n: i64, cache: &mut Cache) -> (i64, i64) {
-    if n < 2 { panic!() }
+    if n < 2 {
+        panic!()
+    }
     if let Some(res) = cache.factors.get(&n) {
         return *res;
     }
@@ -224,18 +232,23 @@ fn closest_factors(n: i64, cache: &mut Cache) -> (i64, i64) {
     let mut root_count = usize::MAX;
     let loop_max = sqrt(n);
     for smaller_factor in (2..loop_max.min(n)).rev() {
-        if n % smaller_factor != 0 { continue }
+        if n % smaller_factor != 0 {
+            continue;
+        }
         let larger_factor = n / smaller_factor;
-        let (smaller_factor, larger_factor) = if larger_factor < smaller_factor { 
+        let (smaller_factor, larger_factor) = if larger_factor < smaller_factor {
             (larger_factor, smaller_factor)
         } else {
             (smaller_factor, larger_factor)
         };
-        let this_root_count = num_roots_in_name(smaller_factor, false, cache) + num_roots_in_name(larger_factor, false, cache);
+        let this_root_count = num_roots_in_name(smaller_factor, false, cache)
+            + num_roots_in_name(larger_factor, false, cache);
         // if n == 646 {
         //     eprintln!("{} = {} * {} ({} roots)", n, smaller_factor, larger_factor, this_root_count);
         // }
-        if this_root_count > root_count { continue }
+        if this_root_count > root_count {
+            continue;
+        }
         if this_root_count < root_count {
             root_count = this_root_count;
             res = (smaller_factor, larger_factor);
@@ -265,7 +278,7 @@ pub(crate) enum Base {
     Vot(Box<Base>, Box<Base>),
     CustomLessThanSix(String),
     Imal(String), // greater than six, one syllable
-    Al(String), // greater than six, more than one syllable
+    Al(String),   // greater than six, more than one syllable
 }
 
 fn is_vowel_or_y(ch: char) -> bool {
@@ -277,16 +290,25 @@ impl Base {
         if den == 1 {
             Self::new(num, cache)
         } else {
-            Self::Vot(Box::new(Self::new(num, cache)), Box::new(Self::new(den, cache)))
+            Self::Vot(
+                Box::new(Self::new(num, cache)),
+                Box::new(Self::new(den, cache)),
+            )
         }
     }
 
     pub(crate) fn new(n: i64, cache: &mut Cache) -> Self {
-        if n < 0 { return Self::Nega(Box::new(Self::new(-n, cache))) }
-        if n == 0 { return Self::Nullary };
-        if n == 1 { return Self::Unary };
+        if n < 0 {
+            return Self::Nega(Box::new(Self::new(-n, cache)));
+        }
+        if n == 0 {
+            return Self::Nullary;
+        };
+        if n == 1 {
+            return Self::Unary;
+        };
         if let Some(root) = Root::from_number(n) {
-            return Self::Root(root)
+            return Self::Root(root);
         }
         let (a, b) = closest_factors(n, cache);
         if a == 1 {
@@ -352,7 +374,7 @@ impl Base {
     fn suffix_name(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Root(r) => write!(f, "{}", r.suffix_name()),
-            _ => self.format_name(f)
+            _ => self.format_name(f),
         }
     }
 
@@ -531,7 +553,11 @@ mod tests {
     fn long_names() {
         let mut cache = Cache::default();
         check_name(841, "hentetraheptasnuntetraseptimal", &mut cache);
-        check_name(6254, "henbihentetraheptasnasnabintetraker's dozenal", &mut cache);
+        check_name(
+            6254,
+            "henbihentetraheptasnasnabintetraker's dozenal",
+            &mut cache,
+        );
         check_name(5758, "binbinbinbinbinbinoctelevenary", &mut cache);
     }
 
